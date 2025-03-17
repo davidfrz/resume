@@ -9,24 +9,58 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 
 # 简历图片上传测试视图
 class UploadImageView(APIView):
-    parser_classes = [MultiPartParser]
+    parser_classes = [MultiPartParser, FormParser]
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
+        # 打印请求信息以便调试
+        print('Request FILES:', request.FILES)
+        print('Request Content-Type:', request.content_type)
+        print('Request data:', request.data)
+        
         # 获取上传的图片文件
-        image_file = request.FILES.get('image')
+        image_file = request.FILES.get('file')
         
-        # 在实际项目中，这里应该保存图片并返回真实URL
-        # 为了演示，我们假设图片已保存并返回一个模拟URL
+        if not image_file:
+            return Response({
+                'code': 400,
+                'message': '未上传图片文件或文件格式不正确'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
-        # 返回模拟数据（待替换为真实OCR解析逻辑）
+        # 验证文件类型
+        allowed_types = ['image/jpeg', 'image/png', 'image/jpg']
+        if not image_file.content_type in allowed_types:
+            return Response({
+                'code': 400,
+                'message': '不支持的文件类型，请上传JPG或PNG格式的图片'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 生成唯一的文件名
+        import os
+        from datetime import datetime
+        from django.conf import settings
+        
+        file_name = f"resume_{datetime.now().strftime('%Y%m%d_%H%M%S')}{os.path.splitext(image_file.name)[1]}"
+        
+        # 确保media目录存在
+        os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+        
+        # 使用MEDIA_ROOT构建完整的文件路径
+        file_path = os.path.join(settings.MEDIA_ROOT, file_name)
+        
+        # 保存文件
+        with open(file_path, 'wb+') as destination:
+            for chunk in image_file.chunks():
+                destination.write(chunk)
+        
+        # 返回数据（待替换为真实OCR解析逻辑）
         return Response({
             'code': 200,
             'data': {
                 'name': '张三',
                 'education': '清华大学 计算机科学与技术 硕士',
                 'experience': '5年全栈开发经验',
-                'image_url': request.build_absolute_uri('/media/temp_image.jpg') if image_file else None
+                'image_url': request.build_absolute_uri(f'/media/{file_name}')
             },
             'message': '解析成功'
         }, status=status.HTTP_200_OK)

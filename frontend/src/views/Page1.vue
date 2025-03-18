@@ -54,6 +54,7 @@ const uploading = ref(false)
 const tableData = ref([])
 
 const beforeUpload = (file) => {
+  uploading.value = true;
   const isImage = file.type === 'image/jpeg' || file.type === 'image/png'
   const isLt5M = file.size / 1024 / 1024 < 5
 
@@ -70,10 +71,7 @@ const handleSuccess = (response) => {
   uploading.value = false
   if (response.code === 200) {
     previewImage.value = response.data.image_url
-    tableData.value = Object.entries(response.data).map(([name, value]) => ({
-      name,
-      value
-    }))
+    tableData.value = Object.entries(response.data).filter(([name]) => name!== 'image_url').map(([name, value]) => ({name, value}))
   } else {
     ElMessage.error('解析失败: ' + response.message)
   }

@@ -7,6 +7,9 @@ from django.contrib.auth.models import User
 from .serializers import UserSerializer, RegisterSerializer
 from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 
+from pprint import pprint
+from paddlenlp import Taskflow
+
 # 简历图片上传测试视图
 class UploadImageView(APIView):
     parser_classes = [MultiPartParser, FormParser]
@@ -52,16 +55,21 @@ class UploadImageView(APIView):
         with open(file_path, 'wb+') as destination:
             for chunk in image_file.chunks():
                 destination.write(chunk)
-        
-        # 返回数据（待替换为真实OCR解析逻辑）
+                
+        # 定义实体关系抽取的schema
+        schema = ['姓名', '出生日期', '电话']
+        ie = Taskflow('information_extraction', schema=schema)
+
+        result = ie({"doc": file_path})
+        data = {}
+        for key in schema:
+            if key in result[0]:
+                data[key] = result[0][key][0]['text']
+                data['image_url'] = request.build_absolute_uri(f'/media/{file_name}')
+        # 返回数据
         return Response({
             'code': 200,
-            'data': {
-                'name': '张三',
-                'education': '清华大学 计算机科学与技术 硕士',
-                'experience': '5年全栈开发经验',
-                'image_url': request.build_absolute_uri(f'/media/{file_name}')
-            },
+            'data': data,
             'message': '解析成功'
         }, status=status.HTTP_200_OK)
 

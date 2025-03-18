@@ -18,11 +18,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from users.views import UploadPDFView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/users/', include('users.urls')),
     path('api-auth/', include('rest_framework.urls')),
+    path('api/pdf/upload/', UploadPDFView.as_view(), name='upload_pdf'),
 ]
 
 # 添加媒体文件的URL配置

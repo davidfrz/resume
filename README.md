@@ -1,5 +1,15 @@
 # 项目启动指南
 
+## 项目账户
+前端登录账户
+- 账号：admin
+- 密码：admin123456
+
+## api-key放置位置
+backend/users/views.py
+第22行 
+填入引号内
+
 ## 前端启动步骤
 
 ### 前提条件
@@ -47,7 +57,7 @@ cd backend # 假设后端项目目录为backend
 ```
 3. 安装依赖：
 ```bash
-pip install -r requirements.txt # 如果有requirements.txt文件
+pip install -r requirements.txt  -i https://pypi.tuna.tsinghua.edu.cn/simple 
 ```
 4. 进行数据库迁移：
 ```bash

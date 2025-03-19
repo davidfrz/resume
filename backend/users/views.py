@@ -10,7 +10,7 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from docx import Document
 from docx.shared import Inches
 from pprint import pprint
-from paddlenlp import Taskflow
+# from paddlenlp import Taskflow
 import fitz  # 用于PDF转图片
 
 import os
@@ -431,6 +431,7 @@ class UploadMultiplePDFView(APIView):
         entities = request.data.get('entities', '')
         print('Received entities:', entities)
         entities = entities.split(',') if entities else []
+        input_text = request.data.get('inputText', '')
 
         if not pdf_files:
             return Response({
@@ -441,21 +442,21 @@ class UploadMultiplePDFView(APIView):
         # 验证文件类型
         allowed_types = ['application/pdf']
         for pdf_file in pdf_files:
-            if pdf_file.content_type not in allowed_types:
+            if pdf_file.content_type not in allowed_types and not pdf_file.name.lower().endswith('.pdf'):
                 return Response({
                     'code': 400,
                     'message': '不支持的文件类型，请上传PDF格式的文件'
                 }, status=status.HTTP_400_BAD_REQUEST)
         
-        all_ocr_data = {}
-        for index, pdf_file in enumerate(pdf_files):
-            print('------------')
-            print(index)
+        all_ocr_data = []
+        file_info = []
+        for index, pdf_file in enumerate(pdf_files, 1):
             # 生成唯一的文件名
             import os
             from datetime import datetime
             from django.conf import settings
             
+            original_name = pdf_file.name
             file_name = f"resume_{datetime.now().strftime('%Y%m%d_%H%M%S')}{os.path.splitext(pdf_file.name)[1]}"
             
             # 确保media目录存在
@@ -469,39 +470,61 @@ class UploadMultiplePDFView(APIView):
                 for chunk in pdf_file.chunks():
                     destination.write(chunk)
             
-            # # PDF转图片
-            # pdf_document = fitz.open(file_path)
-            # image_path = None
-            # if len(pdf_document) > 0:
-            #     page = pdf_document.load_page(0)
-            #     pix = page.get_pixmap()
-            #     image_name = f"resume_{datetime.now().strftime('%Y%m%d_%H%M%S')}_page_0.png"
-            #     image_path = os.path.join(settings.MEDIA_ROOT, image_name)
-            #     pix.save(image_path)
-            
             mes = ocr.ocr(file_path, cls=True)
             mes_str = json.dumps(mes, ensure_ascii=False).replace(" ","").replace("\n","")
-            all_ocr_data[f'pdf_{index}'] = mes_str
+            
+            # 存储文件信息和OCR结果
+            file_info.append({
+                'index': index,
+                'original_name': original_name,
+                'file_name': file_name
+            })
+            all_ocr_data.append({
+                'index': index,
+                'content': mes_str
+            })
         
-        need = request.data.get('inputText', '')
-        # 处理need变量的逻辑
-        conmm = json.dumps(all_ocr_data)
-        # 例如：可以将need的值存储到数据库或进行其他处理
-        # 假设这里有一个API调用函数，例如send_data_to_api
+        # 构建发送给AI的数据结构
+        ai_input = {
+            'requirement': input_text,
+            'resumes': all_ocr_data
+        }
+        
         completion = client.chat.completions.create(
-        model="qwen-plus", # 此处以qwen-plus为例，可按需更换模型名称。模型列表：https://help.aliyun.com/zh/model-studio/getting-started/models
+        model="qwen-plus",
         messages=[
-            {'role': 'system', 'content': '你是一个简历筛选专家，我会给你文字形式的简历，里面还有很多杂乱的数字，你只关心简历的部分。我会在开始给你要求，你根据要求把符合要求的简历编号给我，如{1,2,3}.不要别的任何东西'},
-            {'role': 'user', 'content': '要求如下：'+need+conmm}],
-        )
+            {'role': 'system', 'content': '你是一个简历筛选专家。我会给你一个包含筛选要求和多份简历内容的JSON数据。数据结构为：{"requirement": "筛选要求", "resumes": [{"index": 1, "content": "简历内容"}, ...]}。请根据requirement中的要求，从resumes数组中筛选出符合条件的简历，只返回符合要求的简历index数组，格式如[1,2,3]。不要返回其他任何内容。'},
+            {'role': 'user', 'content': json.dumps(ai_input, ensure_ascii=False)}
+        ])
+        
         res = completion.model_dump_json()
         res = json.loads(res)
         cont = res["choices"][0]["message"]["content"]
+
         print(cont)
-        # data = json.loads(cont)
+        
+        try:
+            # 尝试解析AI返回的结果
+            qualified_ids = json.loads(cont) if cont.startswith('[') else eval(cont)
+            if not isinstance(qualified_ids, list):
+                qualified_ids = [qualified_ids] if qualified_ids else []
+        except Exception as e:
+            print(f"解析AI返回结果出错: {e}")
+            qualified_ids = []
+        
+        # 构建返回数据
+        result_data = []
+        for file_item in file_info:
+            # 检查当前文件是否合格
+            is_qualified = file_item['index'] in qualified_ids
+            result_data.append({
+                'fileName': file_item['original_name'],
+                'qualified': [file_item['original_name']] if is_qualified else []
+            })
+        
         # 返回数据
         return Response({
             'code': 200,
-            'data': cont,
+            'data': result_data,
             'message': '解析成功'
         }, status=status.HTTP_200_OK)

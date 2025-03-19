@@ -3,7 +3,7 @@
     <el-container class="container">
       <el-aside width="200px" class="aside">
         <div class="logo-container">
-          <h3>简历解析系统</h3>
+          <h3>简历筛选系统</h3>
         </div>
         <el-menu
           :default-active="activeIndex"
@@ -25,10 +25,14 @@
             <el-icon><Setting /></el-icon>
             <span>PDF解析</span>
           </el-menu-item>
-          <!-- <el-menu-item index="/home/page3">
+          <el-menu-item index="/home/page3">
             <el-icon><User /></el-icon>
-            <span>页面三</span>
-          </el-menu-item> -->
+            <span>word解析</span>
+          </el-menu-item>
+          <el-menu-item index="/home/page4">
+            <el-icon><Document /></el-icon>
+            <span>简历解析</span>
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-container>

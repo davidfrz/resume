@@ -4,3 +4,4 @@ pymupdf
 paddlenlp==2.6.1
 paddleocr
 pypinyin
+python-docx

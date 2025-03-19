@@ -19,12 +19,18 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from users.views import UploadPDFView
+from users.views import UploadPDFViewAll
+from users.views import UploadWordView
+from users.views import UploadMultiplePDFView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/users/', include('users.urls')),
     path('api-auth/', include('rest_framework.urls')),
     path('api/pdf/upload/', UploadPDFView.as_view(), name='upload_pdf'),
+    path('api/pdf/upload/', UploadPDFViewAll.as_view(), name='upload_pdfall'),
+    path('api/word/upload/', UploadWordView.as_view(), name='upload_word'),
+    path('api/upload-multiple-pdfs/', UploadMultiplePDFView.as_view(), name='upload_multiple_pdfs'),  # 添加新的路由
 ]
 
 # 添加媒体文件的URL配置

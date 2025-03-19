@@ -3,8 +3,8 @@
     <transition name="fade">
       <el-card class="welcome-card">
         <div class="welcome-header">
-          <h1>欢迎使用简历解析系统</h1>
-          <p>智能、高效、精准的简历信息提取工具</p>
+          <h1>欢迎使用简历筛选系统</h1>
+          <p>智能、高效、精准的简历信息提取筛选工具</p>
         </div>
         <el-divider></el-divider>
         <div class="welcome-content">
@@ -13,7 +13,7 @@
           <ul class="feature-list">
             <li><i class="el-icon-document"></i> 简历图片解析</li>
             <li><i class="el-icon-files"></i> PDF 文件转换</li>
-            <!-- <li><i class="el-icon-user"></i> 用户管理</li> -->
+            <li><i class="el-icon-user"></i> 简历筛选</li>
           </ul>
           <div class="stats">
             <!-- <el-tag type="success">已解析 10 万份简历</el-tag>
@@ -22,8 +22,8 @@
         </div>
         <el-divider></el-divider>
         <div class="welcome-footer">
-          <el-button type="primary" @click="goToPage('/home/page1')">开始使用</el-button>
-          <!-- <el-button type="text" @click="goToPage('/about')">了解更多</el-button> -->
+          <el-button type="primary" @click="goToPage('/home/page1')">简历解析</el-button>
+          <el-button type="text" @click="goToPage('/home/page3')">简历筛选</el-button>
         </div>
       </el-card>
     </transition>

@@ -4,39 +4,10 @@
       <el-card class="page-card">
         <div class="card-content">
           <!-- 自定义实体类型输入框和按钮 -->
-          <div style="margin-bottom: 20px;">
-            <el-input
-              v-model="customEntity"
-              placeholder="输入自定义标签"
-              style="width: 200px; margin-right: 10px;"
-            />
-            <el-button @click="addCustomEntity" type="primary">添加标签</el-button>
-          </div>
+          
   
           <!-- 实体类型选择框 -->
-          <el-select
-            v-model="selectedEntities"
-            multiple
-            placeholder="请选择要提取的标签"
-            style="width: 300px; margin-bottom: 20px;"
-          >
-            <el-option
-              v-for="item in entityOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            >
-              <!-- 显示删除按钮，仅对自定义标签生效 -->
-              <span style="float: left">{{ item.label }}</span>
-              <span
-                v-if="!predefinedEntities.includes(item.value)"
-                style="float: right; color: #ff4949; margin-left: 10px;"
-                @click.stop="removeCustomEntity(item.value)"
-              >
-                删除
-              </span>
-            </el-option>
-          </el-select>
+          
   
           <!-- 上传组件，使用自定义上传方法 -->
           <el-upload
@@ -72,9 +43,18 @@
           />
   
           <el-table :data="tableData" v-loading="uploading" style="width: 100%">
-            <el-table-column prop="name" label="项目" width="180" />
-            <el-table-column prop="value" label="内容" />
-          </el-table>
+          <el-table-column prop="name" label="项目" width="180" />
+          <el-table-column label="内容">
+            <template #default="{ row }">
+              <div v-if="typeof row.value === 'object' && row.value!== null">
+                <div v-for="(value, key) in row.value" :key="key">
+                  {{ key }}: {{ typeof value === 'object'? JSON.stringify(value, null, 2) : value }}
+                </div>
+              </div>
+              <div v-else>{{ row.value }}</div>
+            </template>
+          </el-table-column>
+        </el-table>
         </div>
       </el-card>
     </div>

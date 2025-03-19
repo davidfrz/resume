@@ -4,39 +4,9 @@
     <el-card class="page-card">
       <div class="card-content">
         <!-- 自定义实体类型输入框和按钮 -->
-        <div style="margin-bottom: 20px;">
-          <el-input
-            v-model="customEntity"
-            placeholder="输入自定义标签"
-            style="width: 200px; margin-right: 10px;"
-          />
-          <el-button @click="addCustomEntity" type="primary">添加标签</el-button>
-        </div>
 
         <!-- 实体类型选择框 -->
-        <el-select
-          v-model="selectedEntities"
-          multiple
-          placeholder="请选择要提取的标签"
-          style="width: 300px; margin-bottom: 20px;"
-        >
-          <el-option
-            v-for="item in entityOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          >
-            <!-- 显示删除按钮，仅对自定义标签生效 -->
-            <span style="float: left">{{ item.label }}</span>
-            <span
-              v-if="!predefinedEntities.includes(item.value)"
-              style="float: right; color: #ff4949; margin-left: 10px;"
-              @click.stop="removeCustomEntity(item.value)"
-            >
-              删除
-            </span>
-          </el-option>
-        </el-select>
+        
 
         <!-- 上传组件 -->
         <el-upload
@@ -74,7 +44,16 @@
         />
         <el-table :data="tableData" v-loading="uploading" style="width: 100%">
           <el-table-column prop="name" label="项目" width="180" />
-          <el-table-column prop="value" label="内容" />
+          <el-table-column label="内容">
+            <template #default="{ row }">
+              <div v-if="typeof row.value === 'object' && row.value!== null">
+                <div v-for="(value, key) in row.value" :key="key">
+                  {{ key }}: {{ typeof value === 'object'? JSON.stringify(value, null, 2) : value }}
+                </div>
+              </div>
+              <div v-else>{{ row.value }}</div>
+            </template>
+          </el-table-column>
         </el-table>
       </div>
     </el-card>
@@ -93,34 +72,20 @@ const predefinedEntities = ['姓名', '出生日期', '电话', '邮箱', '地�
 const customEntity = ref('')
 
 // 实体类型选项（包括预定义和自定义）
-const entityOptions = ref([
-  { value: '姓名', label: '姓名' },
-  { value: '出生日期', label: '出生日期' },
-  { value: '电话', label: '电话' },
-  { value: '邮箱', label: '邮箱' },
-  { value: '地址', label: '地址' },
-])
+//const entityOptions = ref([
+//  { value: '姓名', label: '姓名' },
+//  { value: '出生日期', label: '出生日期' },
+//  { value: '电话', label: '电话' },
+//  { value: '邮箱', label: '邮箱' },
+//  { value: '地址', label: '地址' },
+//])
 
 const selectedEntities = ref([]) // 用户选择的实体类型
 const previewImage = ref('')
 const uploading = ref(false)
 const tableData = ref([])
 
-// 添加自定义标签
-const addCustomEntity = () => {
-  const entity = customEntity.value.trim()
-  if (!entity) {
-    ElMessage.warning('请输入标签名称')
-    return
-  }
-  if (entityOptions.value.some(item => item.value === entity)) {
-    ElMessage.warning('该标签已存在')
-    return
-  }
-  entityOptions.value.push({ value: entity, label: entity })
-  customEntity.value = '' // 清空输入框
-  ElMessage.success('自定义标签已添加')
-}
+
 
 // 删除自定义标签
 const removeCustomEntity = (value) => {
